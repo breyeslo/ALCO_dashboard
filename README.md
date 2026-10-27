@@ -2,8 +2,12 @@
 
 `bank_dashboard` pulls rates, Fed balance sheet data and bank equity prices,
 computes week-over-week (WoW) and quarter-over-quarter (QoQ) changes, renders
-charts, and emails a responsive HTML briefing. It uses EBC, a US regional
-bank, as the sample subject and compares it with New England peers. To analyze
+charts, and emails a responsive HTML briefing. 
+
+## Personalization
+
+It uses **EBC**
+bank, as the sample subject and compares it with a selection of peers. To analyze
 a different bank, change `SUBJECT_TICKER` in `bank_dashboard/config.py`.
 
 ## What's in the report
@@ -12,13 +16,13 @@ a different bank, change `SUBJECT_TICKER` in `bank_dashboard/config.py`.
 |---|---|---|
 | Rates & curve | 2Y / 10Y / 30Y UST, full 1M–30Y curve, 2s10s, 3m10y, 30Y mortgage | FRED (H.15, Freddie Mac PMMS) |
 | Funding | SOFR, EFFR, fed funds target range, SOFR–EFFR spread | FRED (NY Fed) |
-| FOMC expectations | P(cut / hold / hike) and implied EFFR for the next 4 meetings | CBOT 30-Day Fed Funds futures (`ZQ`) via Yahoo |
-| Bank balance sheets | Deposits, loans & leases, CRE loans, loan-to-deposit ratio (all banks and small banks) | FRED (Fed H.8, weekly, SA) |
+| FOMC expectations | P(cut / hold / hike) and implied EFFR for the next 4 meetings | CBOT 30-Day Fed Funds futures (Yahoo) |
+| Bank balance sheets | Deposits, loans & leases (all banks and small banks) | FRED (Fed H.8, weekly, SA) |
 | EBC vs KRX | EBC vs the KBW Nasdaq Regional Banking Index: 1W, 1M, QoQ, YTD and 1Y returns with the relative spread; 1Y beta, correlation and volatility | Yahoo Finance |
 | Equities | EBC, KRX, KRE, KBE, XLF, SPY + peers: 1W / QoQ / YTD price return, distance from 52-week high | Yahoo Finance |
 
-Charts: EBC vs KRX (indexed, plus a relative-return panel), Treasury yields with a 2s10s panel, the yield curve now vs 1 week and
-1 quarter ago, deposits vs loans with an LDR panel, 1-year bank equity
+Charts: Subject bank vs KRX (indexed, plus a relative-return panel), Treasury yields with a 2s10s panel, the yield curve now vs 1 week and
+1 quarter ago, deposits vs loans, 1-year bank equity
 performance, and the implied fed funds path.
 
 **About the series:** the dashboard uses the weekly H.8 series
@@ -36,7 +40,7 @@ bank_dashboard/
 ├── pipeline.py   orchestration: fetch -> compute -> render -> deliver
 ├── config.py     FRED series, tickers, FOMC calendar, env-driven Config
 ├── sources.py    FRED API client and Yahoo Finance prices
-├── analytics.py  WoW / QoQ metrics, loan-to-deposit ratio, equity returns, beta
+├── analytics.py  WoW / QoQ metrics, equity returns, beta
 ├── fomc.py       FOMC probabilities from 30-Day Fed Funds futures
 ├── narrative.py  rule-based "this week at a glance" bullets
 ├── charts.py     Matplotlib charts
@@ -83,6 +87,13 @@ prices itself.
 
 Run these from the project folder (the one containing `bank_dashboard\`).
 
+**Use the venv's Python.** A bare `python -m bank_dashboard` runs your system
+Python, which usually lacks `yfinance`. The report still builds from FRED, but
+the equities, subject-vs-KRX and FOMC sections are missing, and the FOMC note
+says "Futures unavailable; proxy: ...". To use plain `python`, activate the
+venv first (`.\.venv\Scripts\Activate.ps1`), or in VS Code run
+"Python: Select Interpreter" and pick `.venv`.
+
 Each run saves `dashboard.html` and the chart PNGs to `reports\YYYY-MM-DD\`.
 Exit codes: `0` ok, `1` run or email failure, `2` no data or missing key.
 
@@ -94,12 +105,7 @@ schtasks /Create /TN "Weekly Bank Dashboard" /SC WEEKLY /D MON /ST 07:00 `
   /TR "cmd /c cd /d C:\path\to\bank_dashboard && .venv\Scripts\python.exe -m bank_dashboard >> run.log 2>&1"
 ```
 
-**cron (Linux/macOS):**
-```cron
-0 7 * * 1  cd /path/to/bank_dashboard && .venv/bin/python -m bank_dashboard >> run.log 2>&1
-```
-
-Monday morning is a good slot. It picks up Friday's H.8 release and Friday's market close.
+Recommendation: Monday morning is a good slot. It picks up Friday's H.8 release and Friday's market close.
 
 ## Maintenance
 
@@ -107,6 +113,20 @@ Monday morning is a good slot. It picks up Friday's H.8 release and Friday's mar
   summer, add the next year's dates from the
   [Fed's calendar](https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm).
 - **Peers:** set `PEER_TICKERS` in `.env`.
+- **Subject bank** set `SUBJECT_TICKER` in `.env`. 
 - **How the FOMC probabilities work:** each move is treated as a choice
   between two outcomes (for example 25bp cut vs hold), as FedWatch's headline
   numbers do. These figures are indicative and not a trading signal.
+
+## Example
+
+The report from October 26, 2026, made with `--dry-run`:
+
+<details>
+<summary>Show the full dashboard screenshot</summary>
+
+<p align="center">
+  <img src="docs/dashboard-example.png" alt="Example weekly rates and banking dashboard" width="560">
+</p>
+
+</details>

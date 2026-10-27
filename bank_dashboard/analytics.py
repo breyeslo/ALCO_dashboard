@@ -1,4 +1,10 @@
-"""Metrics: WoW / QoQ changes, H.8 ratios, equity returns, subject-vs-index stats."""
+"""
+Metrics: WoW / QoQ changes, H.8 levels, equity returns, subject-vs-index stats.
+
+WoW / QoQ are measured from the latest observation back 7 / 91 calendar
+days using as-of lookups, so daily, weekly and holiday-gapped series are
+all handled the same way.
+"""
 
 from __future__ import annotations
 
@@ -25,19 +31,14 @@ class Metric:
     label: str
     value: float
     asof: pd.Timestamp
-    wow: float          # absolute change (bp for rates, $bn for levels)
+    wow: float          
     qoq: float
     wow_pct: float = float("nan")
     qoq_pct: float = float("nan")
-    kind: str = "rate"  # "rate" (%), "level" ($bn), "ratio" (%)
+    kind: str = "rate"  
 
 
 def make_metric(label: str, s: pd.Series | None, kind: str = "rate") -> Metric | None:
-    """
-    WoW / QoQ are measured from the latest observation back 7 / 91 calendar
-    days using as-of lookups, so daily, weekly and holiday-gapped series are
-    all handled the same way.
-    """
     if s is None or s.dropna().empty:
         return None
     s = s.dropna()
@@ -82,15 +83,7 @@ def build_bank_metrics(fred: dict[str, pd.Series]) -> list[Metric]:
         make_metric("Loans & Leases - All Banks", g("TOTLL"), "level"),
         make_metric("Deposits - Small Banks", g("DPSSCBW027SBOG"), "level"),
         make_metric("Loans & Leases - Small Banks", g("LLBSCBW027SBOG"), "level"),
-        make_metric("CRE Loans - All Banks", g("CREACBW027SBOG"), "level"),
     ]
-    for lbl, loans, deps in [("LDR - All Banks", "TOTLL", "DPSACBW027SBOG"),
-                             ("LDR - Small Banks", "LLBSCBW027SBOG", "DPSSCBW027SBOG")]:
-        if g(loans) is not None and g(deps) is not None:
-            ldr = (g(loans) / g(deps) * 100).dropna()
-            m = make_metric(lbl, ldr, "ratio")
-            if m:
-                out.append(m)
     return [m for m in out if m]
 
 
@@ -136,11 +129,11 @@ class RelativePerf:
     subject: str
     bench: str
     horizons: list[tuple[str, float, float]]  # (label, subject %, bench %)
-    beta_1y: float          # OLS beta of daily returns vs benchmark
+    beta_1y: float         
     corr_1y: float
-    vol_1y_subject: float   # annualized realized volatility, %
+    vol_1y_subject: float   # annualized realized volatility
     vol_1y_bench: float
-    rel_series: pd.Series   # 1Y cumulative return spread, subject minus bench, pts
+    rel_series: pd.Series   
 
 
 def build_relative(px: pd.DataFrame, subject: str, bench: str) -> RelativePerf | None:

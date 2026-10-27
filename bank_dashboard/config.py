@@ -21,8 +21,7 @@ except ImportError:
 
 
 # FRED series used by the dashboard. Daily series are business-day data;
-# H.8 series are weekly (Wednesday), seasonally adjusted, in $ billions, and
-# are published with a ~9-day lag every Friday.
+# H.8 series are weekly (Wednesday), seasonally adjusted (SA), in $ billions
 FRED_SERIES: dict[str, str] = {
     # Treasury constant-maturity curve (daily, %)
     "DGS1MO": "1M", "DGS3MO": "3M", "DGS6MO": "6M", "DGS1": "1Y",
@@ -33,30 +32,28 @@ FRED_SERIES: dict[str, str] = {
     "EFFR": "Effective Fed Funds",
     "DFEDTARL": "Fed Funds Target (Lower)",
     "DFEDTARU": "Fed Funds Target (Upper)",
-    # Mortgage rate (weekly, %) - relevant to resi lending & MBS book
+    # Mortgage rate (weekly, %) 
     "MORTGAGE30US": "30Y Mortgage (Freddie Mac PMMS)",
     # H.8 Assets & Liabilities of Commercial Banks (weekly, SA, $bn)
     "DPSACBW027SBOG": "Deposits, All Commercial Banks",
     "TOTLL": "Loans & Leases in Bank Credit, All Commercial Banks",
     "DPSSCBW027SBOG": "Deposits, Small Domestic Banks",
     "LLBSCBW027SBOG": "Loans & Leases, Small Domestic Banks",
-    "CREACBW027SBOG": "CRE Loans, All Commercial Banks",
 }
 
 CURVE_TENORS = ["DGS1MO", "DGS3MO", "DGS6MO", "DGS1", "DGS2", "DGS3",
                 "DGS5", "DGS7", "DGS10", "DGS20", "DGS30"]
 TENOR_YEARS = [1 / 12, 0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 30]
 
-# Equities: subject bank, sector ETFs, broad-market benchmark, NE peers.
-SUBJECT_TICKER = "EBC"                         # sample subject bank
+# Equities: subject bank, sector ETFs, broad-market benchmark, peers.
+SUBJECT_TICKER = (os.getenv("SUBJECT_TICKER") or "EBC").strip().upper()  # override via SUBJECT_TICKER
 INDEX_TICKER = "^KRX"                          # KBW Nasdaq Regional Banking Index (primary benchmark)
 SECTOR_TICKERS = ["KRE", "KBE", "XLF"]         # regional banks, banks, financials
 BENCHMARK_TICKER = "SPY"
-DEFAULT_PEERS = ["INDB", "WBS", "CFG"]         # New England peers (override via PEER_TICKERS)
+DEFAULT_PEERS = ["INDB", "WBS", "CFG"]         # Peers (override via PEER_TICKERS)
 
-# Scheduled FOMC meetings, as (first day, decision day).
-# Source: federalreserve.gov/monetarypolicy/fomccalendars.htm (retrieved Oct 2026).
-# Add the next year's calendar each autumn when the Fed publishes it.
+# Scheduled FOMC meetings, as (first day, decision day). Need to update this list each year. 
+# See https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
 FOMC_MEETINGS: list[tuple[date, date]] = [
     (date(2026, 1, 27), date(2026, 1, 28)), (date(2026, 3, 17), date(2026, 3, 18)),
     (date(2026, 4, 28), date(2026, 4, 29)), (date(2026, 6, 16), date(2026, 6, 17)),
@@ -70,7 +67,7 @@ FOMC_MEETINGS: list[tuple[date, date]] = [
 
 WEEK = pd.Timedelta(days=7)
 QUARTER = pd.Timedelta(days=91)
-STALE_PRICE_DAYS = pd.Timedelta(days=5)  # covers a long weekend plus a holiday
+STALE_PRICE_DAYS = pd.Timedelta(days=5) 
 
 
 @dataclass

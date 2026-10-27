@@ -1,8 +1,6 @@
 """
 Matplotlib PNG charts.
 
-Light, recessive chrome; thin 2px lines; categorical colors assigned in a
-fixed order so the same entity keeps the same color across every chart.
 """
 
 from __future__ import annotations
@@ -121,14 +119,13 @@ def chart_curve_snapshot(fred: dict[str, pd.Series], path: Path) -> Path | None:
 
 
 def chart_deposits_loans(fred: dict[str, pd.Series], path: Path, years: int) -> Path | None:
-    """Deposits vs loans ($tn, same units => one axis) + loan-to-deposit ratio."""
+    """Deposits vs loans ($tn, same units => one axis)."""
     dep, ln = fred.get("DPSACBW027SBOG"), fred.get("TOTLL")
     if dep is None or ln is None:
         return None
     start = pd.Timestamp.today() - pd.DateOffset(years=years)
     dep, ln = dep[dep.index >= start] / 1000, ln[ln.index >= start] / 1000
-    fig, (ax, ax2) = plt.subplots(2, 1, figsize=(FIG_W, 5.0), sharex=True,
-                                  gridspec_kw={"height_ratios": [2, 1]})
+    fig, ax = plt.subplots(figsize=(FIG_W, 3.6))
     ax.plot(dep.index, dep.values, color=S1, label="Deposits")
     ax.plot(ln.index, ln.values, color=S2, label="Loans & leases")
     _end_label(ax, dep, f"${dep.iloc[-1]:.2f}tn", S1)
@@ -136,13 +133,7 @@ def chart_deposits_loans(fred: dict[str, pd.Series], path: Path, years: int) -> 
     ax.set_title("All commercial banks: deposits vs loans ($ trillions, SA)")
     ax.legend(loc="center left")
     ax.yaxis.set_major_formatter(lambda v, _: f"${v:.1f}tn")
-
-    ldr = (ln / dep * 100).dropna()
-    ax2.plot(ldr.index, ldr.values, color=INK_2, lw=1.5)
-    _end_label(ax2, ldr, f"{ldr.iloc[-1]:.1f}%", INK_2)
-    ax2.set_title("Loan-to-deposit ratio (%)", fontsize=10)
-    ax2.yaxis.set_major_formatter(lambda v, _: f"{v:.1f}%")
-    _date_axis(ax2, years)
+    _date_axis(ax, years)
     ax.margins(x=0.01)
     fig.subplots_adjust(right=0.86)
     return _finish(fig, path)
@@ -183,7 +174,7 @@ def chart_equities(px: pd.DataFrame, path: Path) -> Path | None:
 
 
 def chart_subject_vs_index(px: pd.DataFrame, rel: RelativePerf | None, path: Path) -> Path | None:
-    """Top: EBC and KRX indexed to 100 (1Y). Bottom: EBC relative to KRX, %."""
+    """Top: subject bank and KRX indexed to 100 (1Y). Bottom: subject bank relative to KRX, %."""
     if rel is None:
         return None
     df = px[[SUBJECT_TICKER, INDEX_TICKER]].dropna()
