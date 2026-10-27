@@ -12,7 +12,7 @@ Pipeline
                 Yahoo Finance (bank equities/ETFs, 30-Day Fed Funds     sources.py,
                 futures)                                                fomc.py
     2. Compute  levels, week-over-week (WoW) and quarter-over-quarter   analytics.py
-                (QoQ) changes, curve spreads, loan-to-deposit ratio,
+                (QoQ) changes, curve spreads,
                 FOMC probabilities implied by Fed Funds futures         fomc.py
     3. Render   Matplotlib PNG charts + table-based HTML email          charts.py,
                                                                         report.py

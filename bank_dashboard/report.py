@@ -40,8 +40,6 @@ def _fmt_delta(m: Metric, which: str, color_sense: int = 0) -> str:
         return f'<span style="color:{C["muted"]}">n/a</span>'
     if m.kind == "level":
         txt = f"{v:+,.0f}bn ({pct:+.2f}%)"
-    elif m.kind == "ratio":
-        txt = f"{v:+.2f} pts"
     else:
         txt = f"{v:+.0f} bp"
     arrow = "&#9650;" if v > 0 else "&#9660;" if v < 0 else "&#9644;"
@@ -105,7 +103,7 @@ def _img(src: str | None, alt: str) -> str:
 
 
 def _relative_body(rel: RelativePerf | None, img_src: Callable[[str], str | None]) -> str:
-    """EBC vs KRX: returns by horizon, relative spread, and 1Y risk stats."""
+    """Subject bank vs KRX: returns by horizon, relative spread, and 1Y risk stats."""
     if rel is None:
         return (f'<div style="font-size:13px;color:{C["ink2"]}">{SUBJECT_TICKER} / KRX price '
                 f'data unavailable this run.</div>')
@@ -145,13 +143,11 @@ def render_html(*, rates, banks, eq, fomc, fomc_note, highlights, rel,
         if m:
             kpis.append(_kpi(lbl, _fmt_val(m), _fmt_delta(m, "wow", sense) +
                              f' <span style="color:{C["muted"]}">WoW</span>'))
-    for lbl, ms in [("Deposits - All Banks", banks), ("Loans & Leases - All Banks", banks),
-                    ("LDR - All Banks", banks)]:
-        m = g(lbl, ms)
+    for lbl in ["Deposits - All Banks", "Loans & Leases - All Banks"]:
+        m = g(lbl, banks)
         if m:
             short = lbl.replace(" - All Banks", "").replace(" & Leases", "")
-            value = _fmt_val(m) if m.kind == "level" else f"{m.value:.1f}%"
-            kpis.append(_kpi(f"Bank {short}", value, _fmt_delta(m, "wow", 1 if m.kind == "level" else 0)
+            kpis.append(_kpi(f"Bank {short}", _fmt_val(m), _fmt_delta(m, "wow", 1)
                              + f' <span style="color:{C["muted"]}">WoW</span>'))
     byt = {r.ticker: r for r in eq}
     if SUBJECT_TICKER in byt:
@@ -220,9 +216,9 @@ def render_html(*, rates, banks, eq, fomc, fomc_note, highlights, rel,
                  f'<ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.5;color:{C["ink"]}">{bullets}</ul>'),
         _section(f"{SUBJECT_TICKER} vs KBW Regional Bank Index (KRX)",
                  _relative_body(rel, img_src),
-                 "Price returns (excl. dividends) so EBC is comparable with KRX, a price index of ~50 US "
+                 f"Price returns (excl. dividends) so {SUBJECT_TICKER} is comparable with KRX, a price index of ~50 US "
                  "regional banks. Beta, correlation and annualized volatility from 1Y daily returns. "
-                 "Relative = EBC return minus KRX return, in percentage points."),
+                 f"Relative = {SUBJECT_TICKER} return minus KRX return, in percentage points."),
         _section("Rates & yield curve",
                  _metric_table(rates, rate_sense) + _img(img_src("treasuries"), "Treasury yields and 2s10s")
                  + _img(img_src("curve"), "Yield curve snapshot"),
